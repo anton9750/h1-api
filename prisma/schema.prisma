@@ -1,0 +1,47 @@
+// Prisma schema for the Kahoot-style quiz API
+// Database: PostgreSQL, hosted on Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// A top-level subject grouping, e.g. "JavaScript", "Service", "React"
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  questions Question[]
+}
+
+// A single quiz question. Belongs to a Category and has 4 related Options.
+model Question {
+  id           Int      @id @default(autoincrement())
+  topic        String
+  question     String
+  correctIndex Int // index (0-3) into the related Options, ordered by `index`
+  category     Category @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  options      Option[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([topic])
+}
+
+// One of the 4 answer choices for a Question.
+model Option {
+  id         Int      @id @default(autoincrement())
+  text       String
+  index      Int // 0-3, position of this option within the question
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId Int
+
+  @@index([questionId])
+}
